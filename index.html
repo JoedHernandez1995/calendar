@@ -63,11 +63,18 @@
 
                         <div class="row">
                             <div class="input-field col s6 offset-s3">
+                                <i class="material-icons prefix">language</i>
                                 <select>
                                     <option value="" disabled selected>Choose your option</option>
                                     <option v-for="country in CountryList" v-bind:value="country.alpha3Code">{{country.name}} ({{country.alpha3Code}})</option>
                                 </select>
                                 <label>Country Code</label>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col s6 offset-s3 center">
+                                <a class="waves-effect waves-light btn" v-on:click="submitData">Submit</a>
                             </div>
                         </div>
 
@@ -82,7 +89,8 @@
                 data: function(){
                     return {
                         message: 'Hello Vue!',
-                        CountryList: []
+                        CountryList: [],
+                        months: [31,28,31,30,31,30,31,31,30,31,30,31]
                     }
                 },
                 created: function(){
@@ -110,13 +118,52 @@
                         }).done((data) => {
                             console.log(data);
                             this.CountryList = data;
-
                             setTimeout(() => {
                                 $('select').formSelect();
                             },200)
                         }).fail((status, errorDesc) =>{
                             console.error(status, errorDesc);
                         });
+                    },
+                    submitData: function(){
+                        var userDate = $("#start_date").val();
+                        if (userDate.length > 0){
+                            var parts = userDate.split('/');
+                            var month = parseInt(parts[0]);
+                            var day = parseInt(parts[1]);
+                            var year = parseInt(parts[2]);
+                            var amountOfDays = $("#days").val();
+                            //Create the groups
+                            var monthsToDisplay = [];
+                            //Check how many days are remaining after starting month
+                            var daysRemainingOfStartingMonth = this.months[month-1] - day;
+                            monthsToDisplay.push({MONTH:month, DAYS_TO_DISPLAY:daysRemainingOfStartingMonth, YEAR:year});
+                            amountOfDays -= daysRemainingOfStartingMonth;
+                            if (amountOfDays > 0){
+                                var daysOfThisMonth = 0;
+                                while (amountOfDays > 0){
+                                    //Since starting month already, passed, lets add 1 up the month
+                                    month++;
+                                    if(month === 13){ //If a year has passed, restart month counter
+                                        month = 1;
+                                        year++;
+                                    }
+                                    if(amountOfDays > this.months[month-1]){
+                                        monthsToDisplay.push({MONTH:month, DAYS_TO_DISPLAY:this.months[month-1], YEAR:year});
+                                        amountOfDays -= this.months[month-1];
+                                    }else{
+                                        monthsToDisplay.push({MONTH:month, DAYS_TO_DISPLAY:amountOfDays, YEAR:year});
+                                        amountOfDays = 0;
+                                    }
+                                }
+                            }
+
+                            console.log(monthsToDisplay);
+                        }
+
+                        
+
+
                     }
                 }
             });
