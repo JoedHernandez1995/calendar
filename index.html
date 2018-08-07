@@ -23,6 +23,8 @@
 
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
 
+        <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
 
         <style>
             
@@ -44,13 +46,43 @@
 
             table td {
                 text-align: center;
+                padding: 0px 0px;
+                display: table-cell;
+                text-align: left;
+                vertical-align: middle;
+                border-radius: 2px;
+                height: 30px;
             }
 
             .fixed-height-panel{
-                height: 413px;
+                height: 290px;
+                padding: 0px;
             }
 
-            .
+            .dayCell{
+                width: 100%;
+                height: 100%;
+            }
+
+            .weekDay{
+                background-color: #e8f5e9;
+            }
+
+            .weekendDay{
+                background-color: #fff9c4;
+            }
+
+            .invalidDay{
+                background-color: #e0e0e0;
+            }
+
+            .calendarItem{
+                display: block;
+                background-color: #757575;
+                height: 40px;
+                line-height: 35px;
+                color: white;
+            }
 
 
         </style>
@@ -75,18 +107,15 @@
                             <div class="input-field col s6 offset-s3 number-of-days-field" >
                                 <i class="material-icons prefix">format_list_numbered</i>
                                 <input id="days" type="text">
-                                <label for="days">Number of Days</label>
+                                <label for="days">Number of Days </label>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="input-field col s6 offset-s3">
+                            <div class="input-field col s6 offset-s3 country-code-field" >
                                 <i class="material-icons prefix">language</i>
-                                <select>
-                                    <option value="" disabled selected>Choose your option</option>
-                                    <option v-for="country in CountryList" v-bind:value="country.alpha3Code">{{country.name}} ({{country.alpha3Code}})</option>
-                                </select>
-                                <label>Country Code</label>
+                                <input id="code" type="text">
+                                <label for="code">Country Code </label>
                             </div>
                         </div>
 
@@ -104,7 +133,7 @@
                 <div class="col s3 center" v-for="month in group">
                     <div class="card-panel white fixed-height-panel animated bounceInUp">
                         <table class="responsive-table">
-                            <span>{{month.MONTH}} {{month.YEAR}}</span>
+                            <span class="calendarItem">{{month.MONTH}} {{month.YEAR}}</span>
                             <thead>
                                 <tr>
                                     <th>Sun</th>
@@ -119,13 +148,13 @@
                             <tbody>
                                 <tr v-for="week in month.MONTH_STRUCTURE">
                                     <td v-for="day in week">
-                                        <div v-if="(day.date !== 0) && (day.dayName === 'Sunday' || day.dayName === 'Saturday')" class="weekendDay">
+                                        <div v-if="(day.date !== 0) && (day.dayName === 'Sunday' || day.dayName === 'Saturday')" class="dayCell weekendDay center">
                                             <span>{{day.date}}</span>
                                         </div>
-                                        <div v-else-if="(day.date !== 0) && (day.dayName !== 'Sunday' && day.dayName !== 'Saturday')" class="weekDay">
+                                        <div v-else-if="(day.date !== 0) && (day.dayName !== 'Sunday' && day.dayName !== 'Saturday')" class="dayCell weekDay center">
                                             <span>{{day.date}}</span>
                                         </div>
-                                        <div v-if="day.date === 0" class="invalidDay">
+                                        <div v-if="day.date === 0" class="dayCell invalidDay center">
                                             
                                         </div>
                                     </td>
@@ -159,33 +188,17 @@
                         yearRange: 100,
                         firstDay: 0
                     });
-                    
-
-                    this.getCountryList();
                 },
                 ready: function(){
 
                 },
 
                 methods: {
-                    getCountryList: function(){
-                        $.ajax({
-                            url: "https://restcountries.eu/rest/v2/all",
-                            method: "GET"
-                        }).done((data) => {
-                            console.log(data);
-                            this.CountryList = data;
-                            setTimeout(() => {
-                                $('select').formSelect();
-                            },200)
-                        }).fail((status, errorDesc) =>{
-                            console.error(status, errorDesc);
-                        });
-                    },
+                    
                     submitData: function(){
                         var userDate = $("#start_date").val();
                         var amountOfDays = parseInt($("#days").val());
-
+                        console.log(amountOfDays);
                         if (userDate.length > 0){
                             if (!isNaN(amountOfDays)){
                                 var parts = userDate.split('/');
@@ -353,8 +366,14 @@
                                 console.log(monthsToDisplay);
                                 this.calendarStructure = monthsToDisplay;
 
+
+
+                            }else{
+                                swal("Uh oh!", "The amount of days entered is not a numeric value!", "error");
                             }
                             
+                        } else {
+                            swal("Uh oh!", "You did not entered a date in the Start Date field!", "error");
                         }
 
                     }
