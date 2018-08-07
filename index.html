@@ -21,6 +21,8 @@
 
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css">
+
 
         <style>
             
@@ -35,6 +37,22 @@
             .start-date-field{
                 cursor: pointer;
             }
+
+            table{
+                font-size: 12px;
+            }
+
+            table td {
+                text-align: center;
+            }
+
+            .fixed-height-panel{
+                height: 413px;
+            }
+
+            .
+
+
         </style>
     </head>
 
@@ -81,6 +99,42 @@
                     </div>
                 </div>
             </div>
+
+            <div class="row" v-for="group in calendarStructure">
+                <div class="col s3 center" v-for="month in group">
+                    <div class="card-panel white fixed-height-panel animated bounceInUp">
+                        <table class="responsive-table">
+                            <span>{{month.MONTH}} {{month.YEAR}}</span>
+                            <thead>
+                                <tr>
+                                    <th>Sun</th>
+                                    <th>Mon</th>
+                                    <th>Tue</th>
+                                    <th>Wed</th>
+                                    <th>Thu</th>
+                                    <th>Fri</th>
+                                    <th>Sat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="week in month.MONTH_STRUCTURE">
+                                    <td v-for="day in week">
+                                        <div v-if="(day.date !== 0) && (day.dayName === 'Sunday' || day.dayName === 'Saturday')" class="weekendDay">
+                                            <span>{{day.date}}</span>
+                                        </div>
+                                        <div v-else-if="(day.date !== 0) && (day.dayName !== 'Sunday' && day.dayName !== 'Saturday')" class="weekDay">
+                                            <span>{{day.date}}</span>
+                                        </div>
+                                        <div v-if="day.date === 0" class="invalidDay">
+                                            
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <script type="text/javascript">
@@ -90,7 +144,10 @@
                     return {
                         message: 'Hello Vue!',
                         CountryList: [],
-                        months: [31,28,31,30,31,30,31,31,30,31,30,31]
+                        months: [31,28,31,30,31,30,31,31,30,31,30,31],
+                        monthsNames: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+                        dayNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+                        calendarStructure: []
                     }
                 },
                 created: function(){
@@ -127,42 +184,178 @@
                     },
                     submitData: function(){
                         var userDate = $("#start_date").val();
+                        var amountOfDays = parseInt($("#days").val());
+
                         if (userDate.length > 0){
-                            var parts = userDate.split('/');
-                            var month = parseInt(parts[0]);
-                            var day = parseInt(parts[1]);
-                            var year = parseInt(parts[2]);
-                            var amountOfDays = $("#days").val();
-                            //Create the groups
-                            var monthsToDisplay = [];
-                            //Check how many days are remaining after starting month
-                            var daysRemainingOfStartingMonth = this.months[month-1] - day;
-                            monthsToDisplay.push({MONTH:month, DAYS_TO_DISPLAY:daysRemainingOfStartingMonth, YEAR:year});
-                            amountOfDays -= daysRemainingOfStartingMonth;
-                            if (amountOfDays > 0){
-                                var daysOfThisMonth = 0;
-                                while (amountOfDays > 0){
-                                    //Since starting month already, passed, lets add 1 up the month
-                                    month++;
-                                    if(month === 13){ //If a year has passed, restart month counter
-                                        month = 1;
-                                        year++;
-                                    }
-                                    if(amountOfDays > this.months[month-1]){
-                                        monthsToDisplay.push({MONTH:month, DAYS_TO_DISPLAY:this.months[month-1], YEAR:year});
-                                        amountOfDays -= this.months[month-1];
-                                    }else{
-                                        monthsToDisplay.push({MONTH:month, DAYS_TO_DISPLAY:amountOfDays, YEAR:year});
-                                        amountOfDays = 0;
+                            if (!isNaN(amountOfDays)){
+                                var parts = userDate.split('/');
+                                var month = parseInt(parts[0]);
+                                var day = parseInt(parts[1]);
+                                var year = parseInt(parts[2]);
+                                //Create the groups
+                                var monthsToDisplay = [];
+                                //Check how many days are remaining after starting month
+
+                                //Check if number of days exceeds current month first
+
+                                var daysRemainingOfStartingMonth = 0;
+
+                                if ((this.months[month-1] - (day+parseInt(amountOfDays))) < 0) { //It exceeds the number of days of the month
+                                    daysRemainingOfStartingMonth = this.months[month-1] - day; 
+                                    console.log(daysRemainingOfStartingMonth);
+                                } else {
+                                    daysRemainingOfStartingMonth = amountOfDays;
+                                    console.log(daysRemainingOfStartingMonth);
+                                }
+
+
+                                //Get day of week for starting date
+                                var dayOfWeek = new Date(userDate).getDay();
+                                console.log(this.dayNames[dayOfWeek]);
+
+
+                                var structure = [];
+
+                                //Check if starting date is not a sunday, and fill with invalid date objects the days before starting date
+                                if(dayOfWeek > 0){
+                                    var x = 0;
+                                    while(x < dayOfWeek){
+                                        structure.push({date:0, dayName: this.dayNames[x]});
+                                        x++;
                                     }
                                 }
+
+                                //Push the starting date
+                                structure.push({date:day, dayName: this.dayNames[dayOfWeek]});
+
+                                day++;
+
+                                //Iterate remaining days
+                                for(var i = 0; i < daysRemainingOfStartingMonth; i++){
+                                    var dateString = `${month}/${day}/${year}`;
+                                    dayOfWeek = new Date(dateString).getDay();
+                                    structure.push({date:day, dayName: this.dayNames[dayOfWeek]});
+                                    day++;
+
+                                    if(i === daysRemainingOfStartingMonth-1){
+                                        if(dayOfWeek <= 6){
+                                            while(dayOfWeek < 6){
+                                                dayOfWeek++;
+                                                structure.push({date:0, dayName: this.dayNames[dayOfWeek]});
+                                                
+                                            }
+                                        }
+                                    }
+                                }
+
+                                //Divide list into groups of 7
+                                var res = []
+                                while(structure.length){
+                                    res.push(structure.splice(0,7));
+                                }
+                                structure = res;
+                                monthsToDisplay.push({MONTH:this.monthsNames[month-1], DAYS_TO_DISPLAY:daysRemainingOfStartingMonth, YEAR:year, MONTH_STRUCTURE:structure});
+                                amountOfDays -= daysRemainingOfStartingMonth;
+
+
+                                if (amountOfDays > 0){
+                                    var daysOfThisMonth = 0;
+                                    while (amountOfDays > 0){
+
+                                        structure = [];
+                                        //Since starting month already, passed, lets add 1 up the month
+                                        month++;
+                                        if(month === 13){ //If a year has passed, restart month counter
+                                            month = 1;
+                                            year++;
+                                        }
+                                        if(amountOfDays > this.months[month-1]){
+
+                                            for(var i = 1; i <= this.months[month-1]; i++){
+                                                //Check if starting date is not a sunday, and fill with invalid date objects the days before starting date
+                                                var dateString = `${month}/${i}/${year}`;
+                                                dayOfWeek = new Date(dateString).getDay();
+                                                if(i==1){
+                                                     if(dayOfWeek > 0){
+                                                        var x = 0;
+                                                        while(x < dayOfWeek){
+                                                            structure.push({date:0, dayName: this.dayNames[x]});
+                                                            x++;
+                                                        }
+                                                    }
+                                                    structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
+                                                } else if (i > 1 && i <= this.months[month-1]){
+                                                    structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
+                                                    if (i === this.months[month-1]){
+                                                        if(dayOfWeek <= 6){
+                                                            while(dayOfWeek < 6){
+                                                                dayOfWeek++;
+                                                                structure.push({date:0, dayName: this.dayNames[dayOfWeek]});
+                                                            }
+                                                        }
+                                                    }
+                                                } 
+                                            }
+                                            //Divide list into groups of 7
+                                            var res = []
+                                            while(structure.length){
+                                                res.push(structure.splice(0,7));
+                                            }
+                                            structure = res;
+                                            monthsToDisplay.push({MONTH:this.monthsNames[month-1], DAYS_TO_DISPLAY:this.months[month-1], YEAR:year, MONTH_STRUCTURE: structure});
+                                            amountOfDays -= this.months[month-1];
+                                        }else{
+
+                                            for(var i = 1; i <= amountOfDays; i++){
+                                                //Check if starting date is not a sunday, and fill with invalid date objects the days before starting date
+                                                var dateString = `${month}/${i}/${year}`;
+                                                dayOfWeek = new Date(dateString).getDay();
+                                                if(i==1){
+                                                     if(dayOfWeek > 0){
+                                                        var x = 0;
+                                                        while(x < dayOfWeek){
+                                                            structure.push({date:0, dayName: this.dayNames[x]});
+                                                            x++;
+                                                        }
+                                                    }
+                                                    structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
+                                                } else if (i > 1 && i <= amountOfDays){
+                                                    structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
+                                                    if(i === amountOfDays){
+                                                        if (dayOfWeek < 6){
+                                                            while(dayOfWeek < 6){
+                                                                dayOfWeek++;
+                                                                    structure.push({date:0, dayName: this.dayNames[dayOfWeek]});
+                                                            }
+                                                        }
+                                                    }
+                                                } 
+                                            }
+                                            //Divide list into groups of 7
+                                            var res = []
+                                            while(structure.length){
+                                                res.push(structure.splice(0,7));
+                                            }
+                                            structure = res;
+                                            monthsToDisplay.push({MONTH:this.monthsNames[month-1], DAYS_TO_DISPLAY:amountOfDays, YEAR:year, MONTH_STRUCTURE: structure});
+                                            amountOfDays = 0;
+                                        }
+                                    }
+                                }
+
+                                //Divide whole list into groups of 4, for display purposes
+                                console.log(monthsToDisplay);
+                                var result = [];
+                                while(monthsToDisplay.length){
+                                    result.push(monthsToDisplay.splice(0,4));
+                                }
+                                monthsToDisplay = result;
+                                console.log(monthsToDisplay);
+                                this.calendarStructure = monthsToDisplay;
+
                             }
-
-                            console.log(monthsToDisplay);
+                            
                         }
-
-                        
-
 
                     }
                 }
