@@ -194,6 +194,45 @@
                 },
 
                 methods: {
+
+
+                    iterateDaysAndCreateStructure: function(amount, month, year){
+                        var structure = [];
+
+                        for(var i = 1; i <= amount; i++){
+                            //Check if starting date is not a sunday, and fill with invalid date objects the days before starting date
+                            var dateString = `${month}/${i}/${year}`;
+                            var dayOfWeek = new Date(dateString).getDay();
+                            if(i==1){
+                                if(dayOfWeek > 0){
+                                    var x = 0;
+                                    while(x < dayOfWeek){
+                                        structure.push({date:0, dayName: this.dayNames[x]});
+                                        x++;
+                                    }
+                                }
+                                structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
+                            } else if (i > 1 && i <= amount){
+                                structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
+                                if (i === amount){
+                                    if(dayOfWeek <= 6){
+                                        while(dayOfWeek < 6){
+                                            dayOfWeek++;
+                                            structure.push({date:0, dayName: this.dayNames[dayOfWeek]});
+                                        }
+                                    }
+                                }
+                            } 
+                        }
+
+                        //Divide list into groups of 7
+                        var res = [];
+                        while(structure.length){
+                            res.push(structure.splice(0,7));
+                        }
+                        structure = res;
+                        return structure;
+                    },
                     
                     submitData: function(){
                         var userDate = $("#start_date").val();
@@ -283,79 +322,16 @@
                                             year++;
                                         }
                                         if(amountOfDays > this.months[month-1]){
-
-                                            for(var i = 1; i <= this.months[month-1]; i++){
-                                                //Check if starting date is not a sunday, and fill with invalid date objects the days before starting date
-                                                var dateString = `${month}/${i}/${year}`;
-                                                dayOfWeek = new Date(dateString).getDay();
-                                                if(i==1){
-                                                     if(dayOfWeek > 0){
-                                                        var x = 0;
-                                                        while(x < dayOfWeek){
-                                                            structure.push({date:0, dayName: this.dayNames[x]});
-                                                            x++;
-                                                        }
-                                                    }
-                                                    structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
-                                                } else if (i > 1 && i <= this.months[month-1]){
-                                                    structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
-                                                    if (i === this.months[month-1]){
-                                                        if(dayOfWeek <= 6){
-                                                            while(dayOfWeek < 6){
-                                                                dayOfWeek++;
-                                                                structure.push({date:0, dayName: this.dayNames[dayOfWeek]});
-                                                            }
-                                                        }
-                                                    }
-                                                } 
-                                            }
-                                            //Divide list into groups of 7
-                                            var res = []
-                                            while(structure.length){
-                                                res.push(structure.splice(0,7));
-                                            }
-                                            structure = res;
+                                            structure = this.iterateDaysAndCreateStructure(this.months[month-1], month, year);
                                             monthsToDisplay.push({MONTH:this.monthsNames[month-1], DAYS_TO_DISPLAY:this.months[month-1], YEAR:year, MONTH_STRUCTURE: structure});
                                             amountOfDays -= this.months[month-1];
                                         }else{
-
-                                            for(var i = 1; i <= amountOfDays; i++){
-                                                //Check if starting date is not a sunday, and fill with invalid date objects the days before starting date
-                                                var dateString = `${month}/${i}/${year}`;
-                                                dayOfWeek = new Date(dateString).getDay();
-                                                if(i==1){
-                                                     if(dayOfWeek > 0){
-                                                        var x = 0;
-                                                        while(x < dayOfWeek){
-                                                            structure.push({date:0, dayName: this.dayNames[x]});
-                                                            x++;
-                                                        }
-                                                    }
-                                                    structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
-                                                } else if (i > 1 && i <= amountOfDays){
-                                                    structure.push({date:i, dayName: this.dayNames[dayOfWeek]});
-                                                    if(i === amountOfDays){
-                                                        if (dayOfWeek < 6){
-                                                            while(dayOfWeek < 6){
-                                                                dayOfWeek++;
-                                                                    structure.push({date:0, dayName: this.dayNames[dayOfWeek]});
-                                                            }
-                                                        }
-                                                    }
-                                                } 
-                                            }
-                                            //Divide list into groups of 7
-                                            var res = []
-                                            while(structure.length){
-                                                res.push(structure.splice(0,7));
-                                            }
-                                            structure = res;
+                                            structure = this.iterateDaysAndCreateStructure(amountOfDays, month, year);
                                             monthsToDisplay.push({MONTH:this.monthsNames[month-1], DAYS_TO_DISPLAY:amountOfDays, YEAR:year, MONTH_STRUCTURE: structure});
                                             amountOfDays = 0;
                                         }
                                     }
                                 }
-
                                 //Divide whole list into groups of 4, for display purposes
                                 console.log(monthsToDisplay);
                                 var result = [];
@@ -365,9 +341,6 @@
                                 monthsToDisplay = result;
                                 console.log(monthsToDisplay);
                                 this.calendarStructure = monthsToDisplay;
-
-
-
                             }else{
                                 swal("Uh oh!", "The amount of days entered is not a numeric value!", "error");
                             }
